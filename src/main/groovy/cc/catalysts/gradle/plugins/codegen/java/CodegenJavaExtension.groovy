@@ -5,6 +5,8 @@ package cc.catalysts.gradle.plugins.codegen.java
  */
 public class CodegenJavaExtension {
 	String packageName
+    String templateExtension = ".tpl"
+    List<String> tplFiles = []
 	List<String> destDirs = []
 	
 	public packageName(pack) {

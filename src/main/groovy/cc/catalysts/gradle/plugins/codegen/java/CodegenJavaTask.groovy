@@ -1,5 +1,9 @@
 package cc.catalysts.gradle.plugins.codegen.java
 
+import org.apache.velocity.VelocityContext;
+import org.apache.velocity.Template;
+import org.apache.velocity.app.Velocity;
+
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
 import java.text.SimpleDateFormat
@@ -22,13 +26,13 @@ class CodegenJavaTask extends DefaultTask {
 			SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm")
 			def date = dateFormat.format(calendar.getTime())
 			def version = project.version
-			project.codegenjava.destDirs.each {
-				File destDir = new File(it)
+			project.codegenjava.destDirs.each { destDirPath ->
+				File destDir = new File(destDirPath)
 				if(destDir.exists()) {
 					destDir.deleteDir()
 				}
-				new File(it + "/" + pName.replace('.', '/')).mkdirs()
-				def f = new File(it + "/" + pName.replace('.', '/') + '/Build.java')
+				new File(destDirPath + "/" + pName.replace('.', '/')).mkdirs()
+				def f = new File(destDirPath + "/" + pName.replace('.', '/') + '/Build.java')
 				def w = f.newWriter()
 				
 				w << 'package ' << pName << ';\r\n'
@@ -38,7 +42,31 @@ class CodegenJavaTask extends DefaultTask {
 				w << '}'
 				
 				w.close()
+
+                String tplExtension = project.extensions.codegenjava.templateExtension
+                project.codegenjava.tplFiles.each { tplFile ->
+                    String targetFile = tplFile
+                    if (targetFile.endsWith(tplExtension)) {
+                        targetFile = targetFile.substring(0, targetFile.length() - tplExtension.length())
+                    }
+                    File generatedFile = new File(destDirPath, targetFile)
+                    println "FILE: " + tplFile + " ${tplFile.class}"
+                    Writer writer = new FileWriter(generatedFile)
+                    println "generating... "
+                    generateFile(tplFile, writer)
+                    println "done"
+                    writer.close()
+                }
 			}
 		}
 	}
+
+    void generateFile(String file, Writer writer) {
+        Velocity.init();
+
+        VelocityContext context = new VelocityContext();
+        context.put( "name", new String("Velocity") );
+        Template template = Velocity.getTemplate(new File("src/tpl", file).getPath())
+        template.merge( context, writer );
+    }
 }

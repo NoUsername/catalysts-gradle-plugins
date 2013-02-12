@@ -23,8 +23,25 @@ class CodegenJavaPlugin implements Plugin<Project> {
 			if(!sourceSet.name.toLowerCase().contains("test")) {
 				def path = "${project.projectDir}/target/generated-sources/${sourceSet.name}/cp"
 				project.extensions.codegenjava.destDirs.add path
+                def tplPath = new File("${project.projectDir}/src/tpl/")
+                if (tplPath.exists()) {
+                    String base = tplPath.getPath()
+                    String tplExtension = project.extensions.codegenjava.templateExtension
+                    tplPath.eachFileRecurse(groovy.io.FileType.FILES) {
+                        String absolute = it.getPath()
+                        String relativePath = getRelativePath(absolute, base)
+                        println "FOUND: $it, RELATIVE: $relativePath"
+                        if (it.getPath().endsWith(tplExtension)) {
+                            project.extensions.codegenjava.tplFiles.add(relativePath)
+                        }
+                    }
+                }
 				sourceSet.java { srcDir path }
 			}
 		}
 	}
+
+    String getRelativePath(String fullPath, String makeRelativeTo) {
+        return new File(makeRelativeTo).toURI().relativize(new File(fullPath).toURI()).getPath();
+    }
 }
