@@ -50,7 +50,6 @@ class CodegenJavaTask extends DefaultTask {
                         targetFile = targetFile.substring(0, targetFile.length() - tplExtension.length())
                     }
                     File generatedFile = new File(destDirPath, targetFile)
-                    println "FILE: " + tplFile + " ${tplFile.class}"
                     Writer writer = new FileWriter(generatedFile)
                     println "generating... "
                     generateFile(tplFile, writer)
@@ -63,9 +62,15 @@ class CodegenJavaTask extends DefaultTask {
 
     void generateFile(String file, Writer writer) {
         Velocity.init();
-
         VelocityContext context = new VelocityContext();
-        context.put( "name", new String("Velocity") );
+
+        if (project.extensions.codegenjava.onGenerate) {
+            Map entries = project.extensions.codegenjava.onGenerate()
+            entries.each { k,v ->
+                context.put(k, v)
+            }
+        }
+
         Template template = Velocity.getTemplate(new File("src/tpl", file).getPath())
         template.merge( context, writer );
     }

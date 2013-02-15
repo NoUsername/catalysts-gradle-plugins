@@ -8,6 +8,8 @@ public class CodegenJavaExtension {
     String templateExtension = ".tpl"
     List<String> tplFiles = []
 	List<String> destDirs = []
+
+    Closure onGenerate
 	
 	public packageName(pack) {
 		this.packageName = pack
